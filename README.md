@@ -2,6 +2,7 @@
 Trip Planner Application
 #Overview
 This project is a Trip Planner Application that allows users to plan their trips, view routes, and share their travel experiences through blog posts. The application consists of a Node.js backend with Express.js and MongoDB for user authentication and a frontend built with HTML, CSS, and JavaScript. The frontend includes features like route planning using Google Maps, exporting route details as a PDF, and a blog section for sharing travel experiences.
+It is a Simple a MVP which only store the data of username ,email and password
 
 Features
 Backend (Node.js + Express.js + MongoDB)
