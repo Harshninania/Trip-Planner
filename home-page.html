@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Home-page</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('backimage.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: white;
+    }
+
+    .dashboard {
+      text-align: center;
+      padding: 20px;
+    }
+
+    #map {
+      height: 400px;
+      width: 100%;
+      margin-top: 20px;
+    }
+
+    .footers input, select {
+      padding: 10px;
+      margin: 5px;
+      width: 200px;
+    }
+
+    .footers button {
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .footers button:hover {
+      background-color: #45a049;
+    }
+
+    .route-info {
+      margin-top: 10px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    .blog-section {
+      background: rgba(0, 0, 0, 0.7); /* Transparent overlay for readability */
+      color: white;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 800px;
+      border-radius: 8px;
+    }
+
+    .blog-section h2 {
+      margin-bottom: 10px;
+    }
+
+    .blog-form textarea {
+      width: 100%;
+      height: 100px;
+      margin-top: 10px;
+    }
+
+    .blog-list {
+      margin-top: 20px;
+    }
+
+    .blog-item {
+      border-bottom: 1px solid #ddd;
+      padding: 10px 0;
+    }
+
+    .blog-item h3 {
+      margin: 0;
+    }
+  </style>
+  <script src="https://maps.gomaps.pro/maps/api/js?key=AlzaSyj0_cvS88ir1WM4V9VJhStU3pYbecWmsWh&libraries=geometry,places&callback=initMap" async defer></script>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="header">
+      <p>"Your Next Adventure Starts Here"</p>
+    </div>
+    <div class="inline-style">
+      <div>
+        <p id="style1">Explore And Enjoy</p>
+      </div>
+      <div>
+        <p id="style2">Your Best Holiday Planner</p>
+      </div>
+      <div class="footers">
+        <i class="fa-solid fa-map"></i>
+        <input type="text" id="start" placeholder="Starting Point">
+        <i class="fa-solid fa-location-crosshairs"></i>
+        <input type="text" id="end" placeholder="Destination">
+        <input type="datetime-local" id="time" placeholder="When">
+        <select id="travelMode">
+          <option value="DRIVING">Driving</option>
+          <option value="WALKING">Walking</option>
+          <option value="BICYCLING">Bicycling</option>
+        </select>
+        <button onclick="calculateAndDisplayRoute()">Show Route</button>
+        <button onclick="exportRouteAsPDF()">Export as PDF</button>
+      </div>
+    </div>
+    <div id="map"></div>
+    <div class="route-info" id="route-info"></div>
+  </div>
+
+  <!-- Blog Section -->
+  <div class="blog-section">
+    <h2>Share Your Journey</h2>
+    <div class="blog-form">
+      <input type="text" id="blog-title" placeholder="Title of Your Journey">
+      <textarea id="blog-content" placeholder="Share your travel experience..."></textarea>
+      <button onclick="addBlogPost()">Post Blog</button>
+    </div>
+    <div class="blog-list" id="blog-list"></div>
+  </div>
+
+  <script>
+    let map;
+    let directionsService;
+    let directionsRenderer;
+
+    function initMap() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 28.7041, lng: 77.1025 }, // Center on Delhi (example)
+        zoom: 8
+      });
+
+      directionsService = new google.maps.DirectionsService();
+      directionsRenderer = new google.maps.DirectionsRenderer();
+      directionsRenderer.setMap(map);
+    }
+
+    window.initMap = initMap;
+
+    function calculateAndDisplayRoute() {
+      const start = document.getElementById('start').value;
+      const end = document.getElementById('end').value;
+      const travelMode = document.getElementById('travelMode').value;
+
+      if (!start || !end) {
+        alert("Please enter both a starting point and a destination.");
+        return;
+      }
+
+      directionsService.route({
+        origin: start,
+        destination: end,
+        travelMode: travelMode
+      }, (response, status) => {
+        if (status === 'OK') {
+          directionsRenderer.setDirections(response);
+
+          const route = response.routes[0].legs[0];
+          const distance = route.distance.text;
+          const duration = route.duration.text;
+
+          document.getElementById('route-info').innerHTML =
+            `Distance: ${distance}, Duration: ${duration}`;
+        } else {
+          window.alert('Directions request failed due to ' + status);
+        }
+      });
+    }
+
+    async function exportRouteAsPDF() {
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF();
+
+      const start = document.getElementById('start').value;
+      const end = document.getElementById('end').value;
+      const travelMode = document.getElementById('travelMode').value;
+      const routeInfo = document.getElementById('route-info').textContent;
+
+      pdf.text("Travel Route Details", 10, 10);
+      pdf.text(`Starting Point: ${start}`, 10, 20);
+      pdf.text(`Destination: ${end}`, 10, 30);
+      pdf.text(`Travel Mode: ${travelMode}`, 10, 40);
+      pdf.text(`Route Info: ${routeInfo}`, 10, 50);
+
+      pdf.save("Route_Details.pdf");
+    }
+
+    // Blog Functions
+    function loadBlogs() {
+      const blogData = JSON.parse(localStorage.getItem('blogs')) || [];
+      const blogList = document.getElementById('blog-list');
+      blogList.innerHTML = '';
+      blogData.forEach(blog => {
+        const blogItem = document.createElement('div');
+        blogItem.className = 'blog-item';
+        blogItem.innerHTML = `<h3>${blog.title}</h3><p>${blog.content}</p>`;
+        blogList.appendChild(blogItem);
+      });
+    }
+
+    function addBlogPost() {
+      const title = document.getElementById('blog-title').value.trim();
+      const content = document.getElementById('blog-content').value.trim();
+
+      if (!title || !content) {
+        alert('Please fill in both title and content.');
+        return;
+      }
+
+      const newBlog = { title, content };
+      const blogs = JSON.parse(localStorage.getItem('blogs')) || [];
+      blogs.push(newBlog);
+      localStorage.setItem('blogs', JSON.stringify(blogs));
+
+      document.getElementById('blog-title').value = '';
+      document.getElementById('blog-content').value = '';
+      loadBlogs();
+    }
+
+    // Load blogs on page load
+    window.onload = loadBlogs;
+  </script>
+</body>
+</html>
